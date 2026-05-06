@@ -1,0 +1,23 @@
+// =============================================================================
+// 06 - Bring DBpedia URI + English abstract for each laureate
+// =============================================================================
+// Two new columns, same cross() shape:
+//   dbpedia_uri      <- person URI from the DBpedia query
+//   abstract_dbp     <- English biographical abstract
+// =============================================================================
+
+// dbpedia_uri
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0, m[0].cells["person"].value, null)
+)
+
+// -----------------------------------------------------------------------------
+// abstract_dbp (run as a separate "Add column based on this column..." step)
+// -----------------------------------------------------------------------------
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0, m[0].cells["abstract"].value, null)
+)

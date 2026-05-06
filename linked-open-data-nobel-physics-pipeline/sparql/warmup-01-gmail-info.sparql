@@ -1,0 +1,28 @@
+# =============================================================================
+# Warm-up Q1 - Author and supported languages of the Gmail resource
+# =============================================================================
+# Endpoint:        https://dbpedia.org/sparql
+# Output columns:  ?autor, ?idioma
+# -----------------------------------------------------------------------------
+# Triple-pattern reading (subject - predicate - object):
+#   dbr:Gmail  dbo:author    ?autor
+#   dbr:Gmail  dbp:language  ?idioma
+#
+# Why dbo: vs dbp::
+#   - dbo:author returns a *resource* (the URI of the author entity, e.g.
+#     dbr:Paul_Buchheit) — this is the "ontology" version, mapped from the
+#     infobox via DBpedia's ontology layer.
+#   - dbp:language returns the *raw* property value from the infobox, which
+#     is often a literal list of language names. Useful when the ontology
+#     mapping is missing or non-standard.
+# =============================================================================
+
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX dbp: <http://dbpedia.org/property/>
+PREFIX dbr: <http://dbpedia.org/resource/>
+
+SELECT DISTINCT ?autor ?idioma
+WHERE {
+  dbr:Gmail dbo:author   ?autor .
+  dbr:Gmail dbp:language ?idioma .
+}

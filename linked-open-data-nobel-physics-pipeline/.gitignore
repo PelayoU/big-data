@@ -1,0 +1,10 @@
+.DS_Store
+*.iml
+.idea/
+
+# Datasets are not committed - regenerate from sources (see README "Reproducing the pipeline")
+*.csv
+*.json
+!grel/*.json
+*.xls
+*.xlsx

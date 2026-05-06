@@ -1,0 +1,113 @@
+# =============================================================================
+# Production-style overlay
+# =============================================================================
+# Layered on top of docker-compose.yml. Differences vs base / dev:
+#   - Internal ports stay internal: only the mongos is reachable from outside
+#     the docker network (host port 27027). Shards and config servers are not
+#     exposed — clients always go through the router.
+#   - Cluster-wide keyfile authentication enabled (--keyFile + --auth).
+#     The keyfile is bind-mounted from ./secrets/mongo-keyfile; create it
+#     with:
+#         mkdir -p secrets
+#         openssl rand -base64 756 > secrets/mongo-keyfile
+#         chmod 400 secrets/mongo-keyfile
+#         # (and chown to 999:999 — the user mongo container runs as)
+#   - --wiredTigerCacheSizeGB capped to keep memory predictable on shared
+#     hosts; tune to host RAM in real deployments.
+#   - depends_on as in dev so startup order matches the manual flow.
+#   - No host-port mappings on shards / config = stronger blast-radius
+#     isolation.
+#
+# Run with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================================
+
+x-mongod-prod: &mongod-prod
+  volumes:
+    - ./secrets/mongo-keyfile:/etc/mongo/keyfile:ro
+  environment:
+    MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_root_username
+    MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+
+services:
+
+  config1:
+    <<: *mongod-prod
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 0.5
+
+  config2:
+    <<: *mongod-prod
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 0.5
+
+  config3:
+    <<: *mongod-prod
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 0.5
+
+  shard1_1:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  shard1_2:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  shard1_3:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  shard2_1:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  shard2_2:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  shard2_3:
+    <<: *mongod-prod
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+             --keyFile /etc/mongo/keyfile --auth
+             --wiredTigerCacheSizeGB 1
+
+  mongos:
+    volumes:
+      - ./secrets/mongo-keyfile:/etc/mongo/keyfile:ro
+    command: >
+      mongos --bind_ip_all --port 27017
+             --configdb myCS/config1:27017,config2:27017,config3:27017
+             --keyFile /etc/mongo/keyfile
+    depends_on:
+      - config1
+      - config2
+      - config3
+      - shard1_1
+      - shard1_2
+      - shard1_3
+      - shard2_1
+      - shard2_2
+      - shard2_3

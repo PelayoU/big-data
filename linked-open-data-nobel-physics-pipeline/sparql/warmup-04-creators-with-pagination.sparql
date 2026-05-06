@@ -1,0 +1,26 @@
+# =============================================================================
+# Warm-up Q4 - Resource creators with birth date and birth place
+# =============================================================================
+# Endpoint:        https://dbpedia.org/sparql
+# Output columns:  ?creator, ?birthDate, ?birthPlace
+# Pagination:      LIMIT 6 + OFFSET 0  (DBpedia rate-limits long queries;
+#                                       paginate with OFFSET 6, 12, ... )
+# -----------------------------------------------------------------------------
+# Why paginate at all:
+#   Public SPARQL endpoints have row caps and timeouts. Asking for "all the
+#   creators" returns a fragment without warning. LIMIT + OFFSET is the
+#   canonical way to walk results in chunks; a stable ORDER BY makes the
+#   pagination deterministic across runs.
+# =============================================================================
+
+PREFIX dbo: <http://dbpedia.org/ontology/>
+
+SELECT DISTINCT ?creator ?birthDate ?birthPlace
+WHERE {
+  ?resource dbo:creator   ?creator .
+  ?creator  dbo:birthDate ?birthDate .
+  ?creator  dbo:birthPlace ?birthPlace .
+}
+ORDER BY ?creator
+LIMIT 6
+OFFSET 0

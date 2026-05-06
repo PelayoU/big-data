@@ -1,0 +1,66 @@
+# =============================================================================
+# Development overlay
+# =============================================================================
+# Layered on top of docker-compose.yml. Differences vs the base:
+#   - Every mongod is exposed on its own host port (27018-27026), matching the
+#     ports used in the manual walkthrough (manual/commands.md). That makes it
+#     possible to attach mongosh directly to a specific shard from the host
+#     and observe its rs.status() during failure scenarios.
+#   - No authentication. No TLS. Ephemeral by intent — meant to be torn down
+#     and recreated frequently.
+#   - depends_on chains added to make `docker compose up` settle in the same
+#     order as the manual flow (shards & config first, mongos last).
+#
+# Run with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# =============================================================================
+
+services:
+
+  config1:
+    ports:
+      - "27024:27017"
+
+  config2:
+    ports:
+      - "27025:27017"
+
+  config3:
+    ports:
+      - "27026:27017"
+
+  shard1_1:
+    ports:
+      - "27018:27017"
+
+  shard1_2:
+    ports:
+      - "27019:27017"
+
+  shard1_3:
+    ports:
+      - "27020:27017"
+
+  shard2_1:
+    ports:
+      - "27021:27017"
+
+  shard2_2:
+    ports:
+      - "27022:27017"
+
+  shard2_3:
+    ports:
+      - "27023:27017"
+
+  mongos:
+    depends_on:
+      - config1
+      - config2
+      - config3
+      - shard1_1
+      - shard1_2
+      - shard1_3
+      - shard2_1
+      - shard2_2
+      - shard2_3

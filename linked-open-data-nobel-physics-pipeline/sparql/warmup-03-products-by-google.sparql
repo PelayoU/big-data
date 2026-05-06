@@ -1,0 +1,24 @@
+# =============================================================================
+# Warm-up Q3 - Products whose author is Google
+# =============================================================================
+# Endpoint:        https://dbpedia.org/sparql
+# Output columns:  ?producto
+# -----------------------------------------------------------------------------
+# Triple-pattern reading: "?producto has dbo:author equal to dbr:Google".
+#
+# Direction of arrows matters. The natural-language sentence "Google is the
+# author of X" maps to:
+#       ?producto dbo:author dbr:Google
+#                                  ^ KNOWN, on the right
+#       ^ UNKNOWN, on the left
+# Putting `dbr:Google dbo:author ?producto` would mean "Google has an
+# author whose value is some product", which is not what we want.
+# =============================================================================
+
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX dbr: <http://dbpedia.org/resource/>
+
+SELECT DISTINCT ?producto
+WHERE {
+  ?producto dbo:author dbr:Google .
+}

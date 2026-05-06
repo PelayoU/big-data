@@ -1,0 +1,12 @@
+// =============================================================================
+// 04 - Bring birthPlaceLabel from the DBpedia project
+// =============================================================================
+// New column: birthPlaceLabel_dbp
+// Pattern:    same cross() shape as 03-cross-bring-birthdate.grel
+// =============================================================================
+
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0, m[0].cells["birthPlaceLabel"].value, null)
+)

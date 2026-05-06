@@ -1,0 +1,18 @@
+# =============================================================================
+# ASK Q1 - Is "Paris" a UN member country?
+# =============================================================================
+# Endpoint:    https://dbpedia.org/sparql
+# Result:      true / false
+# Expected:    false (Paris is a city, not a country)
+# -----------------------------------------------------------------------------
+# ASK is the SPARQL "yes/no" verb: instead of returning rows, it returns a
+# single boolean indicating whether the pattern in WHERE matched at least
+# once. Useful as a cheap existence check without paying for full rows.
+# =============================================================================
+
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX dbr: <http://dbpedia.org/resource/>
+
+ASK {
+  dbr:Paris dbo:type dbr:Member_states_of_the_United_Nations .
+}

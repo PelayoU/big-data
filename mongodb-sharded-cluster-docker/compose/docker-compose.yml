@@ -1,0 +1,150 @@
+# =============================================================================
+# MongoDB sharded cluster — base compose
+# =============================================================================
+# Topology (mirrors the manual/commands.md walkthrough):
+#   - myRS1: shard 1, replica set of 3 nodes (shard1_1..3)
+#   - myRS2: shard 2, replica set of 3 nodes (shard2_1..3)
+#   - myCS:  config server replica set of 3 nodes (config1..3)
+#   - mongos: 1 query router
+#
+# Internal port: every mongod / mongos listens on 27017 inside the container.
+# External access in this base file is intentionally minimal — only the mongos
+# is exposed (on host port 27027). The base file does NOT initialise the
+# replica sets; you do that once with the compose helper script (see README).
+# Override files (dev / prod) layer on top of this one to expose more ports,
+# add health checks, or pin volumes / authentication.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Config-server replica set (myCS)
+  # ---------------------------------------------------------------------------
+  config1:
+    image: mongo:7
+    container_name: config1
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - config1-data:/data/db
+    restart: unless-stopped
+
+  config2:
+    image: mongo:7
+    container_name: config2
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - config2-data:/data/db
+    restart: unless-stopped
+
+  config3:
+    image: mongo:7
+    container_name: config3
+    command: >
+      mongod --configsvr --replSet myCS --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - config3-data:/data/db
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Shard 1 (myRS1)
+  # ---------------------------------------------------------------------------
+  shard1_1:
+    image: mongo:7
+    container_name: shard1_1
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard1_1-data:/data/db
+    restart: unless-stopped
+
+  shard1_2:
+    image: mongo:7
+    container_name: shard1_2
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard1_2-data:/data/db
+    restart: unless-stopped
+
+  shard1_3:
+    image: mongo:7
+    container_name: shard1_3
+    command: >
+      mongod --shardsvr --replSet myRS1 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard1_3-data:/data/db
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Shard 2 (myRS2)
+  # ---------------------------------------------------------------------------
+  shard2_1:
+    image: mongo:7
+    container_name: shard2_1
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard2_1-data:/data/db
+    restart: unless-stopped
+
+  shard2_2:
+    image: mongo:7
+    container_name: shard2_2
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard2_2-data:/data/db
+    restart: unless-stopped
+
+  shard2_3:
+    image: mongo:7
+    container_name: shard2_3
+    command: >
+      mongod --shardsvr --replSet myRS2 --bind_ip_all --port 27017
+    networks: [mongo-net]
+    volumes:
+      - shard2_3-data:/data/db
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Query router (mongos)
+  # ---------------------------------------------------------------------------
+  mongos:
+    image: mongo:7
+    container_name: mongos
+    depends_on:
+      - config1
+      - config2
+      - config3
+    command: >
+      mongos --bind_ip_all --port 27017
+             --configdb myCS/config1:27017,config2:27017,config3:27017
+    networks: [mongo-net]
+    ports:
+      - "27027:27017"
+    restart: unless-stopped
+
+networks:
+  mongo-net:
+    driver: bridge
+
+volumes:
+  config1-data:
+  config2-data:
+  config3-data:
+  shard1_1-data:
+  shard1_2-data:
+  shard1_3-data:
+  shard2_1-data:
+  shard2_2-data:
+  shard2_3-data:

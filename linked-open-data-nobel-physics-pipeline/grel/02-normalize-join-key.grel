@@ -1,0 +1,43 @@
+// =============================================================================
+// 02 - Normalise the join key for cross-project matching
+// =============================================================================
+// Apply on:  fullName column (in BOTH projects: DBpedia and API)
+//            (Edit column -> Add column based on this column...)
+// New column: join
+//
+// Goal:
+//   Produce an identical key for every laureate regardless of how their
+//   name happens to be written in each source. DBpedia returns names like
+//   "Albert Einstein" or "Alexei Abrikosov (physicist)" while the Nobel
+//   API returns "Albert Einstein" or "Alexei A. Abrikosov". A naive equality
+//   join misses a quarter of the records. The normalisation below collapses
+//   both sides to the same fingerprint.
+//
+// Steps, in order:
+//   1) toLowercase()                     -> case insensitivity
+//   2) Strip parenthesised qualifiers    -> "(physicist)" disappears
+//   3) Drop everything that's not letters or whitespace -> punctuation, numbers
+//   4) Collapse runs of whitespace to a single space
+//   5) Trim leading/trailing whitespace
+//   6) split(" ")                        -> tokens (firstname, ..., lastname)
+//   7) Take FIRST + LAST token only      -> drops middle initials/names
+//   8) fingerprint()                     -> normalises tokens (drops accents,
+//                                           sorts), the canonical OpenRefine
+//                                           clustering key.
+//
+// fingerprint() is the same function clusterers use under "Reconcile -> Edit
+// cells -> Cluster and edit". Re-using it as the join key means the join is
+// robust to the same kinds of noise the clusterer was designed to handle.
+// =============================================================================
+
+with(
+  value.toLowercase()
+       .replace(/\s*\([^)]*\)\s*/," ")
+       .replace(/[^A-Za-zÀ-ÿ\s]/,' ')
+       .replace(/\s+/,' ')
+       .trim()
+       .split(' '),
+  t,
+  ( if(t.length()>1, t[0] + ' ' + t[t.length()-1], t.join(' ')) )
+    .fingerprint()
+)

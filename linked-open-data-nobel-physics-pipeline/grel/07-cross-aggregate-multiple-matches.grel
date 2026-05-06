@@ -1,0 +1,20 @@
+// =============================================================================
+// 07 - Aggregate multiple matches when DBpedia returns several rows per laureate
+// =============================================================================
+// Variant of the standard cross() pattern, used when the DBpedia query
+// returned multiple rows per person (common when birthPlace expands to
+// city + region + country, producing 2-3 rows per laureate). Instead of
+// keeping only m[0] and dropping the rest, this version collects every
+// distinct value, joins them with "; ", and stores the aggregate.
+//
+// Apply on:  join column in the API project
+// New column: e.g. birthPlaceLabel_all_dbp
+// =============================================================================
+
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0,
+     forEach(m, r, r.cells["birthPlaceLabel"].value).uniques().join("; "),
+     null)
+)

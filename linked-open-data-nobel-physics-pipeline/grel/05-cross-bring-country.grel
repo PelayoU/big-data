@@ -1,0 +1,11 @@
+// =============================================================================
+// 05 - Bring countryLabel from the DBpedia project
+// =============================================================================
+// New column: countryLabel_dbp
+// =============================================================================
+
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0, m[0].cells["countryLabel"].value, null)
+)

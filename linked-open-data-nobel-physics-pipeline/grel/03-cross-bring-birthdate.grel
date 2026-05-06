@@ -1,0 +1,21 @@
+// =============================================================================
+// 03 - Bring birthDate from the DBpedia project into the API project
+// =============================================================================
+// Apply on:  join column in the API project
+//            (Edit column -> Add column based on this column...)
+// New column: birthDate_dbp
+//
+// Pattern:
+//   cross(value, "<other-project-name>", "<other-project-key-column>")
+//     -> array of matching rows on the other side.
+//   If at least one match, take the first and pull the desired cell value.
+//
+// The other project must be open in the same OpenRefine session.
+// "dbpedia_nobel_physics" is the project name set when the CSV was imported.
+// =============================================================================
+
+with(
+  cross(value, "dbpedia_nobel_physics", "join"),
+  m,
+  if(length(m) > 0, m[0].cells["birthDate"].value, null)
+)

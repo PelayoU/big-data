@@ -1,0 +1,70 @@
+# =============================================================================
+# Main query - Nobel laureates in Physics from DBpedia
+# =============================================================================
+# Endpoint:        https://dbpedia.org/sparql
+# Result format:   CSV (download via the editor)
+# Output columns:  ?person, ?personLabel, ?birthDate, ?birthPlaceLabel,
+#                  ?countryLabel, ?abstract
+# -----------------------------------------------------------------------------
+# Strategy:
+#   1) Anchor on the DBpedia category Nobel_laureates_in_Physics. Every
+#      person resource that has a triple `?person dct:subject dbc:Nobel_…`
+#      is in that category.
+#   2) Join to rdfs:label on the same person to recover the English name.
+#      Wrapped in OPTIONAL so people with no English label are still listed.
+#   3) Join to dbo:abstract for a short biography, also OPTIONAL + lang="en".
+#   4) Join to dbo:birthDate (a literal of type xsd:date).
+#   5) Join to dbo:birthPlace (a *resource*, not a literal). From there:
+#        - rdfs:label gives the place name in English.
+#        - dbo:country traverses to the country *resource*, and rdfs:label
+#          on it gives the English country name.
+#      The whole birthPlace branch is wrapped in OPTIONAL so a missing place
+#      doesn't drop the laureate.
+#   6) ORDER BY personLabel for a stable, alphabetised CSV.
+# -----------------------------------------------------------------------------
+# Why all the OPTIONALs:
+#   DBpedia is a graph extracted from Wikipedia infoboxes; entries are
+#   uneven. Without OPTIONAL on birthDate, birthPlace, abstract, etc., the
+#   query would only return the laureates with every single field filled in,
+#   silently dropping ~30-40% of the rows. OPTIONAL is a LEFT JOIN.
+# =============================================================================
+
+PREFIX dbr:  <http://dbpedia.org/resource/>
+PREFIX dbo:  <http://dbpedia.org/ontology/>
+PREFIX dbp:  <http://dbpedia.org/property/>
+PREFIX dct:  <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dbc:  <http://dbpedia.org/resource/Category:>
+
+SELECT DISTINCT ?person ?personLabel ?birthDate ?birthPlaceLabel ?countryLabel ?abstract
+WHERE {
+
+  # 1) Anchor: people in the Nobel_laureates_in_Physics category.
+  ?person dct:subject dbc:Nobel_laureates_in_Physics .
+
+  # 2) English label of the person (OPTIONAL).
+  OPTIONAL { ?person rdfs:label ?personLabel
+             FILTER (lang(?personLabel) = "en") }
+
+  # 3) English biography abstract (OPTIONAL).
+  OPTIONAL { ?person dbo:abstract ?abstract
+             FILTER (lang(?abstract) = "en") }
+
+  # 4) Birth date as a literal.
+  OPTIONAL { ?person dbo:birthDate ?birthDate . }
+
+  # 5) Birth place as a resource, plus the country it belongs to.
+  OPTIONAL {
+    ?person dbo:birthPlace ?birthPlace .
+
+    OPTIONAL { ?birthPlace rdfs:label ?birthPlaceLabel
+               FILTER (lang(?birthPlaceLabel) = "en") }
+
+    OPTIONAL {
+      ?birthPlace dbo:country ?country .
+      OPTIONAL { ?country rdfs:label ?countryLabel
+                 FILTER (lang(?countryLabel) = "en") }
+    }
+  }
+}
+ORDER BY ?personLabel

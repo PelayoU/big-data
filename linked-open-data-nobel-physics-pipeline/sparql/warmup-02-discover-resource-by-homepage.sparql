@@ -1,0 +1,29 @@
+# =============================================================================
+# Warm-up Q2 - Discover the resource URI from a known homepage
+# =============================================================================
+# Endpoint:        https://dbpedia.org/sparql
+# Output columns:  ?recurso, ?idioma
+# -----------------------------------------------------------------------------
+# Question: given the homepage URL of a webmail product, find the DBpedia
+# resource that describes it and the languages it supports — without
+# knowing the resource name.
+#
+# Pattern: traverse "from the known to the unknown" through foaf:homepage,
+# then constrain the kind of resource via dbo:type.
+#
+# Without the foaf:homepage anchor the query would return every resource of
+# type Webmail (thousands of rows). With it, the answer collapses to the
+# single resource whose homepage matches.
+# =============================================================================
+
+PREFIX dbo:  <http://dbpedia.org/ontology/>
+PREFIX dbp:  <http://dbpedia.org/property/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX res:  <http://dbpedia.org/resource/>
+
+SELECT DISTINCT ?recurso ?idioma
+WHERE {
+  ?recurso foaf:homepage <https://gsuite.google.com/products/gmail/> .
+  ?recurso dbo:type      res:Webmail .
+  ?recurso dbp:language  ?idioma .
+}

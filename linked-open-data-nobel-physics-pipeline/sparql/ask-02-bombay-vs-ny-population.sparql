@@ -1,0 +1,22 @@
+# =============================================================================
+# ASK Q2 - Is Mumbai (Bombay) less populated than New York City?
+# =============================================================================
+# Endpoint:  https://dbpedia.org/sparql
+# Result:    true / false
+# -----------------------------------------------------------------------------
+# Pattern: bind both populations to variables, then compare them with FILTER.
+#
+# This is the canonical idiom to compare numeric properties across two
+# resources in SPARQL — there is no "join" verb, the join is implicit in
+# co-occurring variable names across triples (here: each population is
+# bound to a distinct variable, then both are compared in FILTER).
+# =============================================================================
+
+PREFIX dbo: <http://dbpedia.org/ontology/>
+PREFIX dbr: <http://dbpedia.org/resource/>
+
+ASK {
+  dbr:Mumbai           dbo:populationTotal ?pop_mumbai .
+  dbr:New_York_City    dbo:populationTotal ?pop_ny .
+  FILTER (?pop_mumbai < ?pop_ny)
+}
